@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CapShala – Home</title>
+
+    <link rel="stylesheet" href="css/index.css">
+</head>
+
+<body>
+
+    <!-- SPLASH -->
+    <div id="splash">
+        <h1>CapShala</h1>
+        <p>Captions in Urdu • Roman • English</p>
+    </div>
+
+    <!-- HOME -->
+    <div id="home" class="hidden">
+        <div class="top-bar">CapShala</div>
+
+        <div class="toggle">
+            <button class="active">Urdu</button>
+            <button>Roman</button>
+            <button>English</button>
+        </div>
+
+        <div class="grid">
+            <div class="category">Love</div>
+            <div class="category">Sad</div>
+            <div class="category">Funny</div>
+            <div class="category">Motivation</div>
+            <div class="category">Friendship</div>
+            <div class="category">Poetic</div>
+            <div class="category">Aesthetic</div>
+            <div class="category">Gen-Z Trendy</div>
+        </div>
+    </div>
+
+    <script>
+        window.onload = function () {
+            setTimeout(() => {
+                document.getElementById("splash").classList.add("hidden");
+                document.getElementById("home").classList.remove("hidden");
+            }, 2000);
+        }
+    </script>
+
+</body>
+</html>
