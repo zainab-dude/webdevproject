@@ -1,0 +1,146 @@
+.homepage {
+  background-color: #6a0dad1a;
+  min-height: 100vh;
+  padding-bottom: 80px;
+}
+
+/* LAYOUT */
+.container {
+  display: flex;
+  width: 95%;
+  margin: auto;
+  padding-top: 30px;
+}
+
+/* CATEGORIES SIDEBAR */
+.categories {
+  width: 25%;
+  display: flex;
+  flex-direction: column;
+}
+
+.categories h3 {
+  font-size: 20px;
+  margin-bottom: 15px;
+}
+
+.category-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cat-box {
+  padding: 12px 15px;
+  border-radius: 10px;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+  transition: 0.2s ease-in-out;
+}
+
+.cat-box.active {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+/* CATEGORY COLORS */
+.pink { background: #ff4f8b; }
+.pink:hover { background: #e53e74; }
+
+.blue { background: #0096ff; }
+.blue:hover { background: #0079cc; }
+
+.yellow { background: #ffc233; color: #000; }
+.yellow:hover { background: #e0a82a; }
+
+.purple { background: #9b4dff; }
+.purple:hover { background: #823be0; }
+
+.orange { background: #ff7a3c; }
+.orange:hover { background: #e0642b; }
+
+.teal { background: #2dc5a7; }
+.teal:hover { background: #1ca68c; }
+
+.grey { background: #6f7d8c; }
+.grey:hover { background: #596674; }
+
+.green { background: #00b46e; }
+.green:hover { background: #00965a; }
+
+/* CAPTION FEED */
+.feed {
+  width: 75%;
+  padding-left: 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+.no-captions {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+  font-size: 16px;
+}
+
+.no-captions.error {
+  color: #d72b2b;
+}
+
+.no-captions.error {
+  color: #ff4f8b;
+}
+
+/* Tablet view */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .container {
+    width: 98%;
+  }
+
+  .categories {
+    width: 30%;
+  }
+
+  .feed {
+    width: 70%;
+    padding-left: 30px;
+  }
+}
+
+/* RESPONSIVE (MOBILE VIEW) */
+@media (max-width: 768px) {
+  .homepage {
+    padding-bottom: 80px;
+  }
+
+  .container {
+    flex-direction: column;
+    padding-bottom: 80px;
+    width: 95%;
+    margin: auto;
+  }
+
+  .categories {
+    display: none;
+  }
+
+  .feed {
+    width: 100%;
+    padding-left: 0;
+  }
+}
+
+/* Small mobile */
+@media (max-width: 480px) {
+  .container {
+    width: 92%;
+    padding-top: 20px;
+  }
+
+  .feed {
+    gap: 20px;
+  }
+}
+

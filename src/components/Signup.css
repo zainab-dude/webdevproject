@@ -1,0 +1,70 @@
+.signup-container {
+  background: #fafafa;
+  font-family: 'Segoe UI', sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 60px 20px 20px;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+.card {
+  width: 90%;
+  max-width: 360px;
+  background: white;
+  border: 1px solid #dbdbdb;
+  padding: 40px 30px;
+  text-align: center;
+}
+
+.logo {
+  font-size: 36px;
+  font-weight: 700;
+  color: #6A0DAD;
+  margin-bottom: 30px;
+}
+
+input {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 12px;
+  border-radius: 6px;
+  border: 1px solid #dbdbdb;
+  background: #fafafa;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.signup-btn {
+  width: 100%;
+  padding: 12px;
+  background: #6A0DAD;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 15px;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: background 0.2s;
+}
+
+.signup-btn:hover {
+  background: #5a0b9d;
+}
+
+.login-box {
+  margin-top: 20px;
+  font-size: 14px;
+}
+
+.login-box a {
+  color: #FF4081;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.login-box a:hover {
+  text-decoration: underline;
+}
+

@@ -1,0 +1,98 @@
+.caption-box {
+  background: #fff;
+  padding: 20px;
+  border-radius: 18px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+  border: 1px solid #eee;
+}
+
+.single-caption {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+  color: #2d2d2d;
+  line-height: 1.6;
+}
+
+.single-caption.urdu {
+  direction: rtl;
+  text-align: right;
+  font-size: 20px;
+}
+
+.single-caption.roman {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.single-caption.english {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.language-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background: #f0e6ff;
+  color: #6a0dad;
+  padding: 4px 10px;
+  border-radius: 999px;
+  margin-right: 10px;
+  font-weight: 700;
+}
+
+.icons {
+  margin-top: 12px;
+  display: flex;
+  gap: 18px;
+  font-size: 20px;
+}
+
+.icons i {
+  cursor: pointer;
+  transition: 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  padding: 4px;
+  min-width: 32px;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icons i:hover,
+.icons i:active {
+  color: #c373fb;
+  transform: scale(1.1);
+}
+
+.fav-active {
+  color: #ff4f8b;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .caption-box {
+    padding: 16px;
+  }
+
+  .urdu {
+    font-size: 18px;
+  }
+
+  .roman,
+  .english {
+    font-size: 13px;
+  }
+
+  .icons {
+    gap: 16px;
+    font-size: 18px;
+  }
+}
+

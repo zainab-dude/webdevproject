@@ -1,0 +1,27 @@
+{
+  "short_name": "CapShala",
+  "name": "CapShala - Captions in Urdu, Roman, and English",
+  "description": "Browse beautiful captions in Urdu, Roman, and English",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#6A0DAD",
+  "display": "standalone",
+  "scope": "/",
+  "theme_color": "#6A0DAD",
+  "orientation": "portrait-primary",
+  "categories": ["entertainment", "social", "lifestyle"]
+}
+
