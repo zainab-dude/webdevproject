@@ -12,11 +12,58 @@
   padding-top: 30px;
 }
 
+/* Desktop: Fixed height container with scrollable feed */
+@media (min-width: 1025px) {
+  .homepage {
+    height: 100vh;
+    overflow: hidden;
+    padding-bottom: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .container {
+    flex: 1;
+    overflow: hidden;
+    padding-top: 30px;
+    padding-bottom: 30px;
+    display: flex;
+  }
+}
+
 /* CATEGORIES SIDEBAR */
 .categories {
   width: 25%;
   display: flex;
   flex-direction: column;
+}
+
+/* Desktop: Fixed sidebar height */
+@media (min-width: 1025px) {
+  .categories {
+    height: 100%;
+    overflow-y: auto;
+    padding-right: 15px;
+  }
+
+  /* Custom scrollbar for categories sidebar */
+  .categories::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .categories::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 10px;
+  }
+
+  .categories::-webkit-scrollbar-thumb {
+    background: #6A0DAD;
+    border-radius: 10px;
+  }
+
+  .categories::-webkit-scrollbar-thumb:hover {
+    background: #5a0b9d;
+  }
 }
 
 .categories h3 {
@@ -76,6 +123,37 @@
   display: flex;
   flex-direction: column;
   gap: 25px;
+}
+
+/* Desktop: Make feed scrollable within fixed container */
+@media (min-width: 1025px) {
+  .feed {
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 20px;
+    /* Smooth scrolling */
+    scroll-behavior: smooth;
+  }
+
+  /* Custom scrollbar styling for webkit browsers */
+  .feed::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .feed::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 10px;
+  }
+
+  .feed::-webkit-scrollbar-thumb {
+    background: #6A0DAD;
+    border-radius: 10px;
+  }
+
+  .feed::-webkit-scrollbar-thumb:hover {
+    background: #5a0b9d;
+  }
 }
 
 .no-captions {
