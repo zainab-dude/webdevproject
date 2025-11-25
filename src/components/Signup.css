@@ -68,3 +68,17 @@ input {
   text-decoration: underline;
 }
 
+.error-message {
+  color: #ff3333;
+  font-size: 13px;
+  margin-bottom: 10px;
+  padding: 8px;
+  background: #ffe6e6;
+  border-radius: 4px;
+}
+
+.signup-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+

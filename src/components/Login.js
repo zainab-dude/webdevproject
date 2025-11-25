@@ -1,20 +1,36 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { signInWithNotification } from '../services/authService';
 import { useApp } from '../context/AppContext';
 import './Login.css';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { setIsAuthenticated } = useApp();
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const { setIsAuthenticated, setUser } = useApp();
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Simple authentication logic
-    if (email && password) {
+    setError('');
+    setLoading(true);
+
+    try {
+      const user = await signInWithNotification(email, password);
+      
+      // Update context with user info
+      setUser(user);
       setIsAuthenticated(true);
+      
+      // Navigate to categories after successful login
       navigate('/categories');
+    } catch (error) {
+      setError(error.message || 'Failed to log in. Please check your credentials.');
+      console.error('Login error:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -39,7 +55,10 @@ const Login = () => {
             required
           />
 
-          <button type="submit" className="login-btn">Log In</button>
+          {error && <div className="error-message">{error}</div>}
+          <button type="submit" className="login-btn" disabled={loading}>
+            {loading ? 'Logging in...' : 'Log In'}
+          </button>
         </form>
 
         <div className="signup-box">

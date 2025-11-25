@@ -7,7 +7,9 @@ import Signup from './components/Signup';
 import CategorySelection from './components/CategorySelection';
 import Homepage from './components/Homepage';
 import Favorites from './components/Favorites';
+import Profile from './components/Profile';
 import InstallPrompt from './components/InstallPrompt';
+import ProtectedRoute from './components/ProtectedRoute';
 import './App.css';
 
 function App() {
@@ -19,9 +21,38 @@ function App() {
           <Route path="/" element={<SplashScreen />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
-          <Route path="/categories" element={<CategorySelection />} />
-          <Route path="/home" element={<Homepage />} />
-          <Route path="/favorites" element={<Favorites />} />
+          <Route 
+            path="/categories" 
+            element={
+              <ProtectedRoute>
+                <CategorySelection />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/home" 
+            element={
+              <ProtectedRoute>
+                <Homepage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/favorites" 
+            element={
+              <ProtectedRoute>
+                <Favorites />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/profile" 
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            } 
+          />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Router>

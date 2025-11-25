@@ -11,13 +11,15 @@ const Navbar = () => {
       <nav className="navbar-desktop">
         <div className="logo">CapShala</div>
         <div className="nav-links">
-          <Link to="/home">
+          <Link to="/categories">
             <i className="fa-solid fa-magnifying-glass"></i> Search
           </Link>
           <Link to="/favorites">
             <i className="fa-regular fa-heart"></i> Favorites
           </Link>
-          <Link to="#">
+          <Link to="/home">
+          <i className="fa-solid fa-house"></i> Home</Link>
+          <Link to="/profile">
             <i className="fa-regular fa-user"></i> Profile
           </Link>
         </div>
@@ -28,13 +30,13 @@ const Navbar = () => {
         <Link to="/home" className={location.pathname === '/home' ? 'active' : ''}>
           <i className="fa-solid fa-house"></i>
         </Link>
-        <Link to="#">
+        <Link to="/categories">
           <i className="fa-solid fa-magnifying-glass"></i>
         </Link>
         <Link to="/favorites" className={location.pathname === '/favorites' ? 'active' : ''}>
           <i className="fa-solid fa-heart"></i>
         </Link>
-        <Link to="#">
+        <Link to="/profile" className={location.pathname === '/profile' ? 'active' : ''}>
           <i className="fa-regular fa-user"></i>
         </Link>
       </div>

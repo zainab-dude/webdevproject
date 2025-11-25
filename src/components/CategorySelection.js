@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Navbar from './Navbar';
+
 import { useApp } from '../context/AppContext';
 import './CategorySelection.css';
 
@@ -32,6 +34,7 @@ const CategorySelection = () => {
   };
 
   return (
+    
     <div id="home">
       <div className="top-bar">CapShala</div>
 

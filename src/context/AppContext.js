@@ -1,4 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
+import { onAuthStateChanged, signOutWithNotification, getCurrentUser } from '../services/authService';
 
 const CATEGORY_ORDER = ['All', 'Funny', 'Love', 'Motivation', 'Sad', 'GenZ', 'Aesthetic', 'Poetic', 'Friendship'];
 
@@ -24,7 +25,7 @@ const normalizeCategory = (raw) => {
   return CATEGORY_CANONICAL_MAP[key] || cleaned;
 };
 
-const AppContext = createContext();
+const AppContext = createContext();//data container for the app
 
 export const useApp = () => {
   const context = useContext(AppContext);
@@ -35,14 +36,12 @@ export const useApp = () => {
 };
 
 export const AppProvider = ({ children }) => {
-  const [favorites, setFavorites] = useState(() => {
-    const saved = localStorage.getItem('capshala-favorites');
-    return saved ? JSON.parse(saved) : [];
-  });
-
+  const [favorites, setFavorites] = useState([]);
   const [selectedLanguage, setSelectedLanguage] = useState('urdu');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
 
   const [captions, setCaptions] = useState([]);
   const [categories, setCategories] = useState(['All']);
@@ -107,9 +106,55 @@ export const AppProvider = ({ children }) => {
     fetchCaptions();
   }, []);
 
+  // Load user-specific favorites when user changes
   useEffect(() => {
-    localStorage.setItem('capshala-favorites', JSON.stringify(favorites));
-  }, [favorites]);
+    if (user && user.uid) {
+      // Load favorites for this specific user
+      const userFavoritesKey = `capshala-favorites-${user.uid}`;
+      const saved = localStorage.getItem(userFavoritesKey);
+      setFavorites(saved ? JSON.parse(saved) : []);
+    } else {
+      // Clear favorites when user logs out
+      setFavorites([]);
+    }
+  }, [user]);
+
+  // Save user-specific favorites when they change
+  useEffect(() => {
+    if (user && user.uid && favorites.length >= 0) {
+      const userFavoritesKey = `capshala-favorites-${user.uid}`;
+      localStorage.setItem(userFavoritesKey, JSON.stringify(favorites));
+    }
+  }, [favorites, user]);
+
+  // Auth state listener (using JSON/localStorage)
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged((currentUser) => {
+      if (currentUser) {
+        setUser(currentUser);
+        setIsAuthenticated(true);
+      } else {
+        setUser(null);
+        setIsAuthenticated(false);
+        setFavorites([]); // Clear favorites on logout
+      }
+      setAuthLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // Logout function
+  const logout = () => {
+    try {
+      signOutWithNotification();
+      setUser(null);
+      setIsAuthenticated(false);
+      setFavorites([]); // Clear favorites on logout
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
 
   const toggleFavorite = (captionId) => {
     setFavorites((prev) =>
@@ -141,6 +186,10 @@ export const AppProvider = ({ children }) => {
     getFilteredCaptions,
     isAuthenticated,
     setIsAuthenticated,
+    user,
+    setUser,
+    logout,
+    authLoading,
     categories,
     isLoadingCaptions,
     captionsError
