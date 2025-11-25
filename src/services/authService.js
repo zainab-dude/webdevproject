@@ -1,168 +1,169 @@
-// Simple authentication service using localStorage (JSON-based)
-// Users are stored in localStorage as JSON
+// Firebase Authentication service
+// Handles email/password and Google authentication
+// Session management is automatically handled by Firebase
 
-const USERS_STORAGE_KEY = 'capshala-users';
-const CURRENT_USER_KEY = 'capshala-current-user';
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signInWithPopup,
+  signOut as firebaseSignOut,
+  onAuthStateChanged as firebaseOnAuthStateChanged,
+  updateProfile
+} from 'firebase/auth';
+import { auth, googleProvider } from '../config/firebase';
 
-// Get all users from localStorage
-const getUsers = () => {
-  const usersJson = localStorage.getItem(USERS_STORAGE_KEY);
-  return usersJson ? JSON.parse(usersJson) : {};
-};
+// Convert Firebase user to app user format
+const formatUser = (firebaseUser) => {
+  if (!firebaseUser) return null;
 
-// Save users to localStorage
-const saveUsers = (users) => {
-  localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
+  return {
+    uid: firebaseUser.uid,
+    email: firebaseUser.email,
+    displayName: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User',
+    photoURL: firebaseUser.photoURL || null,
+    createdAt: firebaseUser.metadata?.creationTime || new Date().toISOString(),
+    providerId: firebaseUser.providerData[0]?.providerId || 'password'
+  };
 };
 
 // Get current logged-in user
 export const getCurrentUser = () => {
-  const userJson = localStorage.getItem(CURRENT_USER_KEY);
-  if (!userJson) return null;
-  
-  const user = JSON.parse(userJson);
-  
-  // If user doesn't have createdAt, try to fetch it from users storage
-  if (user && user.email && !user.createdAt) {
-    const users = getUsers();
-    const fullUserData = users[user.email.toLowerCase()];
-    if (fullUserData && fullUserData.createdAt) {
-      user.createdAt = fullUserData.createdAt;
-      setCurrentUser(user); // Update stored user with createdAt
-    }
-  }
-  
-  return user;
+  const user = auth.currentUser;
+  return formatUser(user);
 };
 
-// Set current logged-in user
-const setCurrentUser = (user) => {
-  if (user) {
-    localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
-  } else {
-    localStorage.removeItem(CURRENT_USER_KEY);
-  }
-};
-
-// Sign up a new user
+// Sign up a new user with email and password
 export const signUp = async (email, password, fullName) => {
-  const users = getUsers();
-  
-  // Check if user already exists
-  if (users[email]) {
-    throw new Error('This email is already registered. Please log in instead.');
+  try {
+    // Validate password
+    if (password.length < 6) {
+      throw new Error('Password should be at least 6 characters.');
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      throw new Error('Invalid email address.');
+    }
+
+    // Create user with Firebase
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    
+    // Update profile with display name
+    if (fullName && fullName.trim()) {
+      await updateProfile(userCredential.user, {
+        displayName: fullName.trim()
+      });
+    }
+
+    return formatUser(userCredential.user);
+  } catch (error) {
+    // Handle Firebase errors
+    let errorMessage = 'Failed to create account. Please try again.';
+    
+    if (error.code === 'auth/email-already-in-use') {
+      errorMessage = 'This email is already registered. Please log in instead.';
+    } else if (error.code === 'auth/invalid-email') {
+      errorMessage = 'Invalid email address.';
+    } else if (error.code === 'auth/weak-password') {
+      errorMessage = 'Password should be at least 6 characters.';
+    } else if (error.message) {
+      errorMessage = error.message;
+    }
+    
+    throw new Error(errorMessage);
   }
-
-  // Validate password
-  if (password.length < 6) {
-    throw new Error('Password should be at least 6 characters.');
-  }
-
-  // Validate email format
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email)) {
-    throw new Error('Invalid email address.');
-  }
-
-  // Create new user
-  const userId = Date.now().toString(); // Simple ID generation
-  const newUser = {
-    uid: userId,
-    email: email.toLowerCase().trim(),
-    displayName: fullName.trim(),
-    password: password, // In a real app, this should be hashed!
-    createdAt: new Date().toISOString()
-  };
-
-  // Save user
-  users[email.toLowerCase().trim()] = newUser;
-  saveUsers(users);
-
-  // Auto-login after signup
-  const userToReturn = {
-    uid: newUser.uid,
-    email: newUser.email,
-    displayName: newUser.displayName,
-    createdAt: newUser.createdAt
-  };
-  setCurrentUser(userToReturn);
-
-  return userToReturn;
 };
 
-// Sign in an existing user
+// Sign in an existing user with email and password
 export const signIn = async (email, password) => {
-  const users = getUsers();
-  const normalizedEmail = email.toLowerCase().trim();
-  const user = users[normalizedEmail];
-
-  if (!user) {
-    throw new Error('No account found with this email. Please sign up.');
+  try {
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    return formatUser(userCredential.user);
+  } catch (error) {
+    // Handle Firebase errors
+    let errorMessage = 'Failed to log in. Please check your credentials.';
+    
+    if (error.code === 'auth/user-not-found') {
+      errorMessage = 'No account found with this email. Please sign up.';
+    } else if (error.code === 'auth/wrong-password') {
+      errorMessage = 'Incorrect password. Please try again.';
+    } else if (error.code === 'auth/invalid-email') {
+      errorMessage = 'Invalid email address.';
+    } else if (error.code === 'auth/invalid-credential') {
+      errorMessage = 'Invalid email or password. Please try again.';
+    } else if (error.code === 'auth/too-many-requests') {
+      errorMessage = 'Too many failed attempts. Please try again later.';
+    } else if (error.message) {
+      errorMessage = error.message;
+    }
+    
+    throw new Error(errorMessage);
   }
+};
 
-  if (user.password !== password) {
-    throw new Error('Incorrect password. Please try again.');
+// Sign in with Google
+export const signInWithGoogle = async () => {
+  try {
+    const result = await signInWithPopup(auth, googleProvider);
+    return formatUser(result.user);
+  } catch (error) {
+    let errorMessage = 'Failed to sign in with Google. Please try again.';
+    
+    if (error.code === 'auth/popup-closed-by-user') {
+      errorMessage = 'Sign-in popup was closed. Please try again.';
+    } else if (error.code === 'auth/cancelled-popup-request') {
+      errorMessage = 'Sign-in was cancelled. Please try again.';
+    } else if (error.code === 'auth/popup-blocked') {
+      errorMessage = 'Popup was blocked. Please allow popups and try again.';
+    } else if (error.message) {
+      errorMessage = error.message;
+    }
+    
+    throw new Error(errorMessage);
   }
-
-  // Set current user
-  const userToReturn = {
-    uid: user.uid,
-    email: user.email,
-    displayName: user.displayName,
-    createdAt: user.createdAt
-  };
-  setCurrentUser(userToReturn);
-
-  return userToReturn;
 };
 
 // Sign out current user
-export const signOut = () => {
-  setCurrentUser(null);
+export const signOut = async () => {
+  try {
+    await firebaseSignOut(auth);
+  } catch (error) {
+    console.error('Sign out error:', error);
+    throw new Error('Failed to sign out. Please try again.');
+  }
 };
 
 // Check if user is authenticated
 export const isAuthenticated = () => {
-  return getCurrentUser() !== null;
+  return auth.currentUser !== null;
 };
 
-// Listen to auth state changes (simulated with events)
-let authStateListeners = [];
-
+// Listen to auth state changes (Firebase automatically handles this)
 export const onAuthStateChanged = (callback) => {
-  authStateListeners.push(callback);
-  
-  // Immediately call with current state
-  callback(getCurrentUser());
-
-  // Return unsubscribe function
-  return () => {
-    authStateListeners = authStateListeners.filter(listener => listener !== callback);
-  };
+  // Firebase's onAuthStateChanged automatically handles session persistence
+  return firebaseOnAuthStateChanged(auth, (firebaseUser) => {
+    const user = formatUser(firebaseUser);
+    callback(user);
+  });
 };
 
-// Notify all listeners of auth state change
-const notifyAuthStateChange = (user) => {
-  authStateListeners.forEach(listener => listener(user));
+// Sign out with notification (for backward compatibility)
+export const signOutWithNotification = async () => {
+  await signOut();
+  // Firebase's onAuthStateChanged will automatically notify listeners
 };
 
-// Sign out with notification
-export const signOutWithNotification = () => {
-  setCurrentUser(null);
-  notifyAuthStateChange(null);
-};
-
-// Sign in with notification
+// Sign in with notification (for backward compatibility)
 export const signInWithNotification = async (email, password) => {
   const user = await signIn(email, password);
-  notifyAuthStateChange(user);
+  // Firebase's onAuthStateChanged will automatically notify listeners
   return user;
 };
 
-// Sign up with notification
+// Sign up with notification (for backward compatibility)
 export const signUpWithNotification = async (email, password, fullName) => {
   const user = await signUp(email, password, fullName);
-  notifyAuthStateChange(user);
+  // Firebase's onAuthStateChanged will automatically notify listeners
   return user;
 };
-

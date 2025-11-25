@@ -6,9 +6,10 @@ import { useApp } from '../context/AppContext';
 import './CategorySelection.css';
 
 const languageOptions = [
+  { label: 'English', value: 'english' },
   { label: 'Urdu', value: 'urdu' },
-  { label: 'Roman', value: 'roman' },
-  { label: 'English', value: 'english' }
+  { label: 'Roman', value: 'roman' }
+  
 ];
 
 const CategorySelection = () => {
@@ -20,11 +21,11 @@ const CategorySelection = () => {
     isLoadingCaptions,
     captionsError
   } = useApp();
-  const [selectedLang, setSelectedLang] = useState(selectedLanguage || 'urdu');
+  const [selectedLang, setSelectedLang] = useState(selectedLanguage || 'english');
   const navigate = useNavigate();
 
   useEffect(() => {
-    setSelectedLang(selectedLanguage || 'urdu');
+    setSelectedLang(selectedLanguage || 'english');
   }, [selectedLanguage]);
 
   const handleCategoryClick = (category) => {

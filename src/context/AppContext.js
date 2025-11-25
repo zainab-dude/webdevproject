@@ -37,7 +37,7 @@ export const useApp = () => {
 
 export const AppProvider = ({ children }) => {
   const [favorites, setFavorites] = useState([]);
-  const [selectedLanguage, setSelectedLanguage] = useState('urdu');
+  const [selectedLanguage, setSelectedLanguage] = useState('english');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
@@ -145,9 +145,11 @@ export const AppProvider = ({ children }) => {
   }, []);
 
   // Logout function
-  const logout = () => {
+  const logout = async () => {
     try {
-      signOutWithNotification();
+      await signOutWithNotification();
+      // Firebase's onAuthStateChanged will automatically update the state,
+      // but we update immediately for better UX
       setUser(null);
       setIsAuthenticated(false);
       setFavorites([]); // Clear favorites on logout
