@@ -2,100 +2,117 @@ require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+
+// Models
 const Caption = require('./models/Caption');
+const User = require('./models/Users'); // Make sure your file is named Users.js or User.js
+const Favorite = require('./models/Favorite');
+
+// Utils
 const { getRandomGradient } = require('./utils');
-const User = require('./models/Users'); // Import the new User model
-const Favorite = require('./models/Favorite'); // Import Favorite model
 
 const app = express();
+
+// --- Middleware ---
 app.use(cors());
-// app.use(express.json());
-app.use(cors());
-app.use(express.json({ limit: '50mb' })); // Allow large image uploads
+// Increase limit for Base64 images
+app.use(express.json({ limit: '50mb' })); 
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-// Connect to MongoDB
+// --- Database Connection ---
 mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log('MongoDB Connected'))
-  .catch(err => console.error(err));
-  app.post('/api/auth/signup', async (req, res) => {
-    try {
-      const { name, email, password } = req.body;
-  
-      // Validate input
-      if (!name || !email || !password) {
-        return res.status(400).json({ error: "Name, email, and password are required" });
-      }
-  
-      // Check if user exists
-      const existingUser = await User.findOne({ email });
-      if (existingUser) return res.status(400).json({ error: "Email already exists" });
-  
-      // Create new user
-      // Generate a random avatar based on name
-      const avatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`;
-      
-      const newUser = new User({ name, email, password, avatar });
-      await newUser.save();
+  .then(() => console.log('✅ MongoDB Connected'))
+  .catch(err => console.error('❌ MongoDB Connection Error:', err));
 
-      console.log('✅ User saved to MongoDB:', { name, email, id: newUser._id });
 
-      // Don't send password back
-      const userResponse = { ...newUser.toObject() };
-      delete userResponse.password;
-      
-      res.status(201).json(userResponse);
-    } catch (err) {
-      console.error('Signup error:', err);
-      res.status(500).json({ error: err.message || 'Server error during signup' });
-    }
-  });
-  
-  // GET: List all users (for testing/debugging)
-  app.get('/api/users', async (req, res) => {
-    try {
-      const users = await User.find({}).select('-password'); // Exclude passwords
-      res.json(users);
-    } catch (err) {
-      res.status(500).json({ error: err.message });
-    }
-  });
+// ==========================================
+// AUTHENTICATION ROUTES
+// ==========================================
 
-  // 2. LOGIN
-  app.post('/api/auth/login', async (req, res) => {
-    try {
-      const { email, password } = req.body;
-  
-      // Validate input
-      if (!email || !password) {
-        return res.status(400).json({ error: "Email and password are required" });
-      }
-  
-      // Find user
-      const user = await User.findOne({ email });
-      if (!user) return res.status(404).json({ error: "User not found" });
-  
-      // Check password (simple check for prototype)
-      if (user.password !== password) {
-        return res.status(400).json({ error: "Invalid credentials" });
-      }
-  
-      // Don't send password back
-      const userResponse = { ...user.toObject() };
-      delete userResponse.password;
-      
-      res.json(userResponse);
-    } catch (err) {
-      console.error('Login error:', err);
-      res.status(500).json({ error: err.message || 'Server error during login' });
+// 1. SIGN UP
+app.post('/api/auth/signup', async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+
+    // A. Validate input
+    if (!name || !email || !password) {
+      return res.status(400).json({ error: "Name, email, and password are required" });
     }
-  });
-  
+
+    // B. Check if user exists (Crucial Step)
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ error: "Email already exists" });
+    }
+
+    // C. Generate Avatar & Create User
+    const avatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`;
+    
+    // Note: In a production app, you should hash the password here (e.g., using bcrypt)
+    const newUser = new User({ name, email, password, avatar });
+    await newUser.save();
+
+    console.log('✅ User created:', { name, email, id: newUser._id });
+
+    // D. Return User (Exclude password)
+    const userResponse = { ...newUser.toObject() };
+    delete userResponse.password;
+    
+    res.status(201).json(userResponse);
+
+  } catch (err) {
+    console.error('Signup error:', err);
+    res.status(500).json({ error: err.message || 'Server error during signup' });
+  }
+});
+
+// 2. LOGIN
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ error: "Email and password are required" });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    // Simple password check (Prototype only)
+    if (user.password !== password) {
+      return res.status(400).json({ error: "Invalid credentials" });
+    }
+
+    const userResponse = { ...user.toObject() };
+    delete userResponse.password;
+    
+    res.json(userResponse);
+  } catch (err) {
+    console.error('Login error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET: List all users (For debugging only)
+app.get('/api/users', async (req, res) => {
+  try {
+    const users = await User.find({}).select('-password');
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+// ==========================================
+// CAPTION ROUTES
+// ==========================================
+
 // GET: Fetch Captions (With Language Filter)
 app.get('/api/captions', async (req, res) => {
   try {
-    const { lang } = req.query; // e.g. ?lang=english
-    const filter = lang ? { language: lang } : { language: 'english' }; // Default to English
+    const { lang } = req.query; 
+    const filter = lang ? { language: lang } : { language: 'english' };
     
     const captions = await Caption.find(filter).sort({ createdAt: -1 });
     res.json(captions);
@@ -113,59 +130,61 @@ app.post('/api/captions', async (req, res) => {
       text,
       language,
       category,
-      image: image || null, // Include image if provided
-      gradient: getRandomGradient() // Auto-assign a gradient
+      image: image || null,
+      gradient: getRandomGradient()
     });
 
     const savedCaption = await newCaption.save();
-    console.log('✅ Caption saved:', { id: savedCaption._id, hasImage: !!savedCaption.image });
+    console.log('✅ Caption posted:', { id: savedCaption._id, hasImage: !!image });
     res.status(201).json(savedCaption);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
 });
 
-// POST: Toggle Favorite (Add/Remove)
+
+// ==========================================
+// FAVORITE ROUTES
+// ==========================================
+
+// POST: Toggle Favorite
 app.post('/api/favorites', async (req, res) => {
   try {
     const { userId, captionId } = req.body;
     
-    if (!userId || !captionId) {
-      return res.status(400).json({ error: 'userId and captionId are required' });
-    }
+    if (!userId || !captionId) return res.status(400).json({ error: 'Missing Data' });
 
-    // Check if already favorited
     const existing = await Favorite.findOne({ userId, captionId });
     
     if (existing) {
-      // Remove favorite
       await Favorite.deleteOne({ userId, captionId });
       res.json({ favorited: false, message: 'Removed from favorites' });
     } else {
-      // Add favorite
       const newFavorite = new Favorite({ userId, captionId });
       await newFavorite.save();
       res.json({ favorited: true, message: 'Added to favorites' });
     }
   } catch (err) {
-    console.error('Favorite error:', err);
     res.status(500).json({ error: err.message });
   }
 });
 
-// GET: Get User's Favorites
+// GET: Get User's Favorites (Optimized)
 app.get('/api/favorites/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
     
-    const favorites = await Favorite.find({ userId }).populate('captionId');
+    // Populate the caption details directly
+    const favorites = await Favorite.find({ userId })
+      .populate({
+        path: 'captionId',
+        options: { sort: { createdAt: -1 } } // Sort captions by newest
+      });
     
-    // Filter out any null captionIds (in case caption was deleted)
-    const validFavorites = favorites.filter(fav => fav.captionId);
-    const captionIds = validFavorites.map(fav => fav.captionId._id);
-    
-    // Get full caption data
-    const captions = await Caption.find({ _id: { $in: captionIds } }).sort({ createdAt: -1 });
+    // Extract just the caption objects, removing any nulls (deleted captions)
+    const captions = favorites
+      .map(fav => fav.captionId)
+      .filter(caption => caption !== null);
     
     res.json(captions);
   } catch (err) {
@@ -174,21 +193,16 @@ app.get('/api/favorites/:userId', async (req, res) => {
   }
 });
 
-// GET: Check if captions are favorited by user
+// GET: Check specific favorites status
 app.get('/api/favorites/check/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
-    const { captionIds } = req.query; // Comma-separated caption IDs
+    const { captionIds } = req.query; 
     
-    if (!captionIds) {
-      return res.json({});
-    }
+    if (!captionIds) return res.json({});
     
     const ids = captionIds.split(',');
-    const favorites = await Favorite.find({ 
-      userId, 
-      captionId: { $in: ids } 
-    });
+    const favorites = await Favorite.find({ userId, captionId: { $in: ids } });
     
     const favoritedMap = {};
     favorites.forEach(fav => {
@@ -197,10 +211,10 @@ app.get('/api/favorites/check/:userId', async (req, res) => {
     
     res.json(favoritedMap);
   } catch (err) {
-    console.error('Check favorites error:', err);
     res.status(500).json({ error: err.message });
   }
 });
 
+// --- Start Server ---
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
