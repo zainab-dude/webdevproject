@@ -1,14 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, PaperPlaneRight, Image as ImageIcon, TextT, UploadSimple, WarningCircle } from '@phosphor-icons/react';
+import { ArrowLeft, PaperPlaneRight, Image as ImageIcon, TextT, UploadSimple, WarningCircle, Keyboard as KeyboardIcon, Backspace } from '@phosphor-icons/react';
 
 const Upload = () => {
   const navigate = useNavigate();
   const canvasRef = useRef(null);
+  const textareaRef = useRef(null); 
   
-  // Tabs: 'text' or 'image'
   const [mode, setMode] = useState('text'); 
-  const [error, setError] = useState(''); // New Error State
+  const [error, setError] = useState('');
+  const [showKeyboard, setShowKeyboard] = useState(false);
 
   const [formData, setFormData] = useState({
     text: '',
@@ -17,17 +18,62 @@ const Upload = () => {
     imageResult: null 
   });
 
-  // Image Editor State
   const [uploadedImage, setUploadedImage] = useState(null);
   const [style, setStyle] = useState({
     fontSize: 40,
     color: '#ffffff',
-    yPos: 50, // Percentage from top
+    yPos: 50,
     shadow: true
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // --- IMAGE EDITOR LOGIC ---
+  const urduKeys = [
+    'ا', 'ب', 'پ', 'ت', 'ٹ', 'ث', 'ج', 'چ', 'ح', 'خ',
+    'د', 'ڈ', 'ذ', 'ر', 'ڑ', 'ز', 'ژ', 'س', 'ش', 'ص',
+    'ض', 'ط', 'ظ', 'ع', 'غ', 'ف', 'ق', 'ک', 'گ', 'ل',
+    'م', 'ن', 'و', 'ہ', 'ھ', 'ء', 'ی', 'ے', 'آ', 'ۃ',
+    '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹', '۰',
+     'Backspace','۔', '،', '؟', '!', '"', 'Space' 
+  ];
+
+  const handleKeyClick = (char) => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const currentText = formData.text;
+
+    if (char === 'Backspace') {
+        if (start === end && start > 0) {
+            const newText = currentText.substring(0, start - 1) + currentText.substring(end);
+            setFormData({ ...formData, text: newText });
+            setTimeout(() => {
+                textarea.selectionStart = textarea.selectionEnd = start - 1;
+                textarea.focus();
+            }, 0);
+        } else if (start !== end) {
+            const newText = currentText.substring(0, start) + currentText.substring(end);
+            setFormData({ ...formData, text: newText });
+            setTimeout(() => {
+                textarea.selectionStart = textarea.selectionEnd = start;
+                textarea.focus();
+            }, 0);
+        }
+        return;
+    }
+
+    const charToInsert = char === 'Space' ? ' ' : char;
+    const newText = currentText.substring(0, start) + charToInsert + currentText.substring(end);
+
+    setFormData({ ...formData, text: newText });
+
+    setTimeout(() => {
+      textarea.selectionStart = textarea.selectionEnd = start + 1;
+      textarea.focus();
+    }, 0);
+  };
+
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -36,7 +82,7 @@ const Upload = () => {
         const img = new Image();
         img.onload = () => {
             setUploadedImage(img);
-            setError(''); // Clear error when image is uploaded
+            setError('');
         };
         img.src = event.target.result;
       };
@@ -44,21 +90,17 @@ const Upload = () => {
     }
   };
 
-  // Draw on Canvas whenever inputs change
   useEffect(() => {
     if (mode === 'image' && uploadedImage && canvasRef.current) {
       const canvas = canvasRef.current;
       const ctx = canvas.getContext('2d');
 
-      // 1. Set Canvas Size
       const scale = Math.min(800 / uploadedImage.width, 1);
       canvas.width = uploadedImage.width * scale;
       canvas.height = uploadedImage.height * scale;
 
-      // 2. Draw Image
       ctx.drawImage(uploadedImage, 0, 0, canvas.width, canvas.height);
 
-      // 3. Draw Text
       if (formData.text) {
         ctx.font = `bold ${style.fontSize}px ${formData.language === 'urdu' ? 'Noto Nastaliq Urdu' : 'Inter'}`;
         ctx.textAlign = 'center';
@@ -68,7 +110,7 @@ const Upload = () => {
         const maxWidth = canvas.width * 0.9;
         const x = canvas.width / 2;
         const y = (canvas.height * style.yPos) / 100;
-        const lineHeight = style.fontSize * 1.2;
+        const lineHeight = style.fontSize * 1.5; 
         
         const words = formData.text.split(' ');
         const lines = [];
@@ -101,17 +143,15 @@ const Upload = () => {
         });
       }
     }
-  }, [uploadedImage, formData.text, style, mode]);
+  }, [uploadedImage, formData.text, style, mode, formData.language]);
 
-  // --- SUBMISSION ---
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(''); // Reset errors
+    setError('');
 
-    // 1. VALIDATION CHECK
     if (mode === 'image' && !uploadedImage) {
         setError('Please upload an image to continue.');
-        return; // Stop execution
+        return;
     }
 
     if (!formData.text.trim()) {
@@ -123,7 +163,6 @@ const Upload = () => {
 
     let finalPayload = { ...formData };
     
-    // Prepare Image Payload
     if (mode === 'image' && canvasRef.current) {
         finalPayload.image = canvasRef.current.toDataURL('image/jpeg', 0.8);
     }
@@ -151,7 +190,7 @@ const Upload = () => {
       
       {/* Header */}
       <div className="flex-shrink-0 mb-4">
-          <button onClick={() => navigate('/')} className="flex items-center gap-2 text-gray-400 hover:text-white transition">
+          <button onClick={() => navigate('/')} className="flex items-center gap-2 text-slate-500 hover:text-purple-600 dark:text-gray-400 dark:hover:text-white transition">
             <ArrowLeft size={20} /> Back to Feed
           </button>
       </div>
@@ -161,21 +200,27 @@ const Upload = () => {
         {/* LEFT COLUMN: Controls */}
         <div className="flex flex-col overflow-y-auto pr-2 custom-scrollbar">
             <div className="mb-6">
-                <h2 className="text-3xl font-bold text-white mb-2">Create Vibe</h2>
-                <p className="text-gray-400 text-sm">Choose your format</p>
+                <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-2 transition-colors">Create Vibe</h2>
+                <p className="text-slate-500 dark:text-gray-400 text-sm transition-colors">Choose your format</p>
             </div>
 
             {/* Mode Switcher */}
-            <div className="flex bg-[#1A1D23] p-1 rounded-xl border border-gray-700 mb-6">
+            <div className="flex bg-white dark:bg-[#1A1625] p-1 rounded-xl border border-purple-100 dark:border-[#2F2645] mb-6 transition-colors shadow-sm dark:shadow-none">
                 <button 
                     onClick={() => { setMode('text'); setError(''); }}
-                    className={`flex-1 py-2 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-all ${mode === 'text' ? 'bg-[#2A2E35] text-white shadow' : 'text-gray-400'}`}
+                    className={`flex-1 py-2 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-all 
+                    ${mode === 'text' 
+                        ? 'bg-purple-100 dark:bg-[#2F2645] text-purple-700 dark:text-white shadow-sm' 
+                        : 'text-slate-500 dark:text-gray-400'}`}
                 >
                     <TextT size={18} /> Caption Only
                 </button>
                 <button 
                     onClick={() => { setMode('image'); setError(''); }}
-                    className={`flex-1 py-2 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-all ${mode === 'image' ? 'bg-[#2A2E35] text-white shadow' : 'text-gray-400'}`}
+                    className={`flex-1 py-2 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-all 
+                    ${mode === 'image' 
+                        ? 'bg-purple-100 dark:bg-[#2F2645] text-purple-700 dark:text-white shadow-sm' 
+                        : 'text-slate-500 dark:text-gray-400'}`}
                 >
                     <ImageIcon size={18} /> Image + Caption
                 </button>
@@ -184,14 +229,20 @@ const Upload = () => {
             <form onSubmit={handleSubmit} className="space-y-5">
                 {/* Language */}
                 <div>
-                    <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Language</label>
+                    <label className="text-xs font-bold text-slate-500 dark:text-gray-500 uppercase tracking-widest">Language</label>
                     <div className="flex gap-2 mt-2">
                     {['english', 'urdu', 'roman'].map((lang) => (
                         <button
                         key={lang}
                         type="button"
-                        onClick={() => setFormData({ ...formData, language: lang })}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-bold border capitalize ${formData.language === lang ? 'bg-emerald-500/10 border-emerald-500 text-emerald-400' : 'bg-[#1A1D23] border-gray-700 text-gray-400'}`}
+                        onClick={() => {
+                            setFormData({ ...formData, language: lang });
+                            if (lang !== 'urdu') setShowKeyboard(false);
+                        }}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold border capitalize transition-colors
+                        ${formData.language === lang 
+                            ? 'bg-purple-100 text-purple-700 border-purple-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500' 
+                            : 'bg-white dark:bg-[#1A1625] border-purple-100 dark:border-[#2F2645] text-slate-500 dark:text-gray-400'}`}
                         >
                         {lang}
                         </button>
@@ -199,58 +250,113 @@ const Upload = () => {
                     </div>
                 </div>
 
-                {/* Text Input */}
+                {/* Text Input with Keyboard Support */}
                 <div>
-                    <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Caption Text</label>
+                    <div className="flex items-center justify-between mb-2">
+                        <label className="text-xs font-bold text-slate-500 dark:text-gray-500 uppercase tracking-widest">Caption Text</label>
+                        
+                        {formData.language === 'urdu' && (
+                            <button 
+                                type="button"
+                                onClick={() => setShowKeyboard(!showKeyboard)}
+                                className={`flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-all 
+                                ${showKeyboard 
+                                    ? 'bg-purple-600 text-white' 
+                                    : 'bg-purple-100 dark:bg-[#2F2645] text-purple-600 dark:text-gray-400 hover:bg-purple-200 dark:hover:text-white'}`}
+                            >
+                                <KeyboardIcon size={16} />
+                                {showKeyboard ? 'Hide Keypad' : 'Urdu Keypad'}
+                            </button>
+                        )}
+                    </div>
+
                     <textarea
-                    required
-                    rows={mode === 'text' ? 4 : 2}
-                    value={formData.text}
-                    onChange={(e) => setFormData({ ...formData, text: e.target.value })}
-                    className={`mt-2 w-full bg-[#1A1D23] border border-gray-700 rounded-xl p-4 text-white placeholder-gray-600 focus:border-purple-500 outline-none resize-none
-                        ${formData.language === 'urdu' ? 'text-right font-urdu' : 'text-left font-sans'}`}
-                    placeholder="Type your caption here..."
+                        ref={textareaRef}
+                        required
+                        rows={mode === 'text' ? 4 : 2}
+                        value={formData.text}
+                        onChange={(e) => setFormData({ ...formData, text: e.target.value })}
+                        dir={formData.language === 'urdu' ? 'rtl' : 'ltr'}
+                        // FIX: Updated text colors here (text-purple-700 dark:text-white)
+                        className={`w-full bg-white dark:bg-[#1A1625] border border-purple-100 dark:border-[#2F2645] rounded-xl p-4 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-600 focus:border-purple-500 dark:focus:border-purple-500 outline-none resize-none transition-colors shadow-sm dark:shadow-none
+                            ${formData.language === 'urdu' ? 'font-urdu text-xl' : 'font-sans'}`}
+                        placeholder={
+                            formData.language === 'urdu' ? 'یہاں ٹائپ کریں...' :
+                            formData.language === 'roman' ? 'Yahan type karain...' :
+                            'Type your caption here...'
+                        }
                     />
+
+                    {/* ON-SCREEN KEYBOARD */}
+                    {formData.language === 'urdu' && showKeyboard && (
+                        <div className="mt-2 bg-white dark:bg-[#151221] p-2 rounded-xl border border-purple-100 dark:border-[#2F2645] animate-in fade-in zoom-in-95 duration-200 transition-colors shadow-sm dark:shadow-none">
+                            <div className="grid grid-cols-10 gap-1.5" dir="rtl">
+                                {urduKeys.map((char, index) => (
+                                    <button
+                                        key={index}
+                                        type="button"
+                                        onClick={() => handleKeyClick(char)}
+                                        className={`h-8 rounded md:h-9 bg-purple-50/50 dark:bg-[#2F2645] border border-purple-100 dark:border-transparent hover:bg-purple-500 hover:text-white hover:border-purple-500 text-slate-700 dark:text-gray-300 font-urdu text-lg transition-colors flex items-center justify-center shadow-sm
+                                            ${char === 'Space' ? 'col-span-3 text-xs font-sans' : ''}
+                                            ${char === 'Backspace' ? 'col-span-2 bg-red-50 dark:bg-red-500/10 text-red-500 dark:text-red-400 border-red-100 dark:border-transparent hover:bg-red-500 hover:text-white hover:border-red-500' : ''}
+                                        `}
+                                    >
+                                        {char === 'Backspace' ? <Backspace size={20} /> : char}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Category */}
                 <div>
-                    <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Tag</label>
+                    <label className="text-xs font-bold text-slate-500 dark:text-gray-500 uppercase tracking-widest">Tag</label>
                     <input 
                         type="text"
                         value={formData.category}
                         onChange={(e) => setFormData({...formData, category: e.target.value})}
-                        className="mt-2 w-full bg-[#1A1D23] border border-gray-700 rounded-xl p-3 text-white focus:border-purple-500 outline-none"
+                        className="mt-2 w-full bg-white dark:bg-[#1A1625] border border-purple-100 dark:border-[#2F2645] rounded-xl p-3 text-slate-900 dark:text-white focus:border-purple-500 outline-none transition-colors shadow-sm dark:shadow-none"
                         placeholder="#Vibes"
                     />
                 </div>
 
                 {/* IMAGE CONTROLS */}
                 {mode === 'image' && (
-                    <div className={`bg-[#1A1D23] p-4 rounded-xl border ${error && !uploadedImage ? 'border-red-500/50 bg-red-500/5' : 'border-gray-700'} space-y-4 transition-all`}>
+                    <div className={`bg-white dark:bg-[#1A1625] p-4 rounded-xl border ${error && !uploadedImage ? 'border-red-400 bg-red-50 dark:border-red-500/50 dark:bg-red-500/5' : 'border-purple-100 dark:border-[#2F2645]'} space-y-4 transition-all shadow-sm dark:shadow-none`}>
                          {!uploadedImage && (
-                            <div className="border-2 border-dashed border-gray-600 rounded-xl p-6 text-center hover:border-purple-500 transition-colors cursor-pointer relative">
+                            <div className="border-2 border-dashed border-purple-200 dark:border-[#2F2645] rounded-xl p-6 text-center hover:border-purple-500 dark:hover:border-purple-500 transition-colors cursor-pointer relative group">
                                 <input type="file" accept="image/*" onChange={handleImageUpload} className="absolute inset-0 opacity-0 cursor-pointer" />
-                                <UploadSimple size={24} className="mx-auto text-gray-400 mb-2" />
-                                <p className="text-xs text-gray-400">Click to upload</p>
+                                <UploadSimple size={24} className="mx-auto text-slate-400 group-hover:text-purple-500 mb-2 transition-colors" />
+                                <p className="text-xs text-slate-500 dark:text-gray-400 group-hover:text-purple-500">Click to upload</p>
                             </div>
                          )}
 
                          {uploadedImage && (
                              <>
                                 <div>
-                                    <label className="text-xs text-gray-500">Size</label>
-                                    <input type="range" min="20" max="100" value={style.fontSize} onChange={(e) => setStyle({...style, fontSize: parseInt(e.target.value)})} className="w-full accent-purple-500 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer" />
+                                    <label className="text-xs text-slate-500 dark:text-gray-500">Size</label>
+                                    <input type="range" min="20" max="100" value={style.fontSize} onChange={(e) => setStyle({...style, fontSize: parseInt(e.target.value)})} className="w-full accent-purple-600 h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer" />
                                 </div>
                                 <div>
-                                    <label className="text-xs text-gray-500">Position</label>
-                                    <input type="range" min="10" max="90" value={style.yPos} onChange={(e) => setStyle({...style, yPos: parseInt(e.target.value)})} className="w-full accent-purple-500 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer" />
+                                    <label className="text-xs text-slate-500 dark:text-gray-500">Position</label>
+                                    <input type="range" min="10" max="90" value={style.yPos} onChange={(e) => setStyle({...style, yPos: parseInt(e.target.value)})} className="w-full accent-purple-600 h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer" />
                                 </div>
                                 <div className="flex items-center justify-between">
-                                    <label className="text-xs text-gray-500">Color</label>
-                                    <input type="color" value={style.color} onChange={(e) => setStyle({...style, color: e.target.value})} className="bg-transparent border-none w-8 h-8 cursor-pointer" />
+                                    <label className="text-xs text-slate-500 dark:text-gray-500">Color</label>
+                                    
+                                    {/* FIX: Relative Container for Color Input */}
+                                    <div className="relative w-8 h-8 rounded-full border border-gray-300 dark:border-gray-600 flex items-center justify-center overflow-hidden cursor-pointer shadow-sm">
+                                        <div className="w-full h-full" style={{ backgroundColor: style.color }} />
+                                        <input 
+                                            type="color" 
+                                            value={style.color} 
+                                            onChange={(e) => setStyle({...style, color: e.target.value})} 
+                                            className="absolute inset-0 opacity-0 w-full h-full cursor-pointer" 
+                                        />
+                                    </div>
                                 </div>
-                                <button type="button" onClick={() => setUploadedImage(null)} className="text-xs text-red-400 underline">Change Image</button>
+                                <button type="button" onClick={() => setUploadedImage(null)} className="text-xs text-red-500 dark:text-red-400 underline">Change Image</button>
                              </>
                          )}
                     </div>
@@ -258,27 +364,35 @@ const Upload = () => {
 
                 {/* ERROR MESSAGE DISPLAY */}
                 {error && (
-                    <div className="flex items-center gap-2 text-red-400 text-sm bg-red-500/10 p-3 rounded-lg border border-red-500/20 animate-pulse">
+                    <div className="flex items-center gap-2 text-red-600 dark:text-red-400 text-sm bg-red-50 dark:bg-red-500/10 p-3 rounded-lg border border-red-200 dark:border-red-500/20 animate-pulse transition-colors">
                         <WarningCircle size={20} weight="fill" />
                         {error}
                     </div>
                 )}
 
+                {/* FIX: Improved Post Button UI */}
                 <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full py-4 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl font-bold text-white shadow-lg hover:scale-[1.01] transition-all flex items-center justify-center gap-2 mb-4 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-[95%] py-4 rounded-xl font-bold text-purple-700 dark:text-white bg-gradient-to-r from-purple-600 to-pink-600 shadow-lg shadow-purple-100/30 hover:shadow-purple-600/50 hover:scale-[1.01] active:scale-[0.98] transition-all flex items-center justify-center gap-2 mb-4 disabled:opacity-50 disabled:cursor-not-allowed group"
                 >
-                    {isSubmitting ? 'Processing...' : <><PaperPlaneRight size={20} weight="fill" /> {mode === 'image' ? 'Post Image Vibe' : 'Post Caption'}</>}
+                    {isSubmitting ? 'Processing...' : (
+                        <>
+                            <div className="bg-white/20 p-1 rounded-lg group-hover:rotate-45 transition-transform duration-300">
+                                <PaperPlaneRight size={20} weight="fill" />
+                            </div>
+                            {mode === 'image' ? 'Post Image Vibe' : 'Post Caption'}
+                        </>
+                    )}
                 </button>
             </form>
         </div>
 
         {/* RIGHT COLUMN: Preview */}
-        <div className="h-full bg-[#0d0f12] rounded-2xl border border-gray-800 p-4 flex items-center justify-center overflow-hidden">
+        <div className="h-full bg-white dark:bg-[#110E1B] rounded-2xl border border-purple-100 dark:border-[#2F2645] p-4 flex items-center justify-center overflow-hidden transition-colors duration-300 shadow-sm dark:shadow-none">
             {mode === 'text' ? (
                 <div className="w-full max-w-sm aspect-square rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 p-8 flex items-center justify-center shadow-2xl animate-in zoom-in duration-300">
-                    <p className={`text-2xl font-bold text-white text-center break-words overflow-wrap-anywhere px-4 ${formData.language === 'urdu' ? 'font-urdu' : 'font-sans'}`}>
+                    <p className={`text-xl font-bold text-slate-900 dark:text-white text-center leading-tight py-4 drop-shadow-md break-words overflow-wrap-anywhere px-4 ${formData.language === 'urdu' ? 'font-urdu' : 'font-sans'}`}>
                         "{formData.text || 'Your caption here...'}"
                     </p>
                 </div>
@@ -286,8 +400,8 @@ const Upload = () => {
                 <div className="relative w-full h-full flex items-center justify-center">
                     {!uploadedImage && (
                         <div className="text-center">
-                            <ImageIcon size={48} className={`mx-auto mb-2 ${error ? 'text-red-400' : 'text-gray-700'}`} />
-                            <p className={`${error ? 'text-red-400' : 'text-gray-500'} text-sm`}>
+                            <ImageIcon size={48} className={`mx-auto mb-2 transition-colors duration-300 ${error ? 'text-red-500 dark:text-red-400' : 'text-purple-200 dark:text-[#2F2645]'}`} />
+                            <p className={`text-sm transition-colors duration-300 ${error ? 'text-red-500 dark:text-red-400' : 'text-slate-400 dark:text-gray-500'}`}>
                                 {error ? 'Please upload an image!' : 'Upload an image to start editing'}
                             </p>
                         </div>

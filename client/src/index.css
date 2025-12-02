@@ -4,14 +4,29 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 
+   REMOVED: Hardcoded background-color and color 
+   The App.jsx wrapper now handles these via Tailwind classes
+*/
 body {
-  background-color: #121418;
-  color: white;
   font-family: 'Inter', sans-serif;
+  margin: 0;
+  padding: 0;
 }
 
 /* Specific class for Urdu text */
 .font-urdu {
   font-family: 'Noto Nastaliq Urdu', serif;
-  line-height: 1.8; /* Urdu needs more height */
+  line-height: 1.8;
 }
+
+/* Custom Scrollbar (Optional - Theme Aware) */
+::-webkit-scrollbar { width: 6px; }
+
+/* Dark Mode Scrollbar */
+.dark ::-webkit-scrollbar-track { background: #121418; }
+.dark ::-webkit-scrollbar-thumb { background: #2A2E35; border-radius: 4px; }
+
+/* Light Mode Scrollbar */
+::-webkit-scrollbar-track { background: #f3f4f6; }
+::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }

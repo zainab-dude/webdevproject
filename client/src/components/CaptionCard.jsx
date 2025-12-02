@@ -4,8 +4,9 @@ import { Copy, HeartStraight, DownloadSimple, Share } from '@phosphor-icons/reac
 const CaptionCard = ({ data, onCopy, user, isFavorited: initialIsFavorited, onFavoriteToggle }) => {
   const [isFavorited, setIsFavorited] = useState(initialIsFavorited || false);
   const [isToggling, setIsToggling] = useState(false);
+
   const handleDownload = (e) => {
-    e.stopPropagation(); // Prevent clicking the card
+    e.stopPropagation();
     const link = document.createElement('a');
     link.href = data.image;
     link.download = `caption-vibes-${data._id}.jpg`;
@@ -13,7 +14,7 @@ const CaptionCard = ({ data, onCopy, user, isFavorited: initialIsFavorited, onFa
   };
 
   const handleFavorite = async (e) => {
-    e.stopPropagation(); // Prevent clicking the card
+    e.stopPropagation();
     
     if (!user) {
       alert('Please login to favorite captions');
@@ -46,7 +47,7 @@ const CaptionCard = ({ data, onCopy, user, isFavorited: initialIsFavorited, onFa
   };
 
   const handleShare = async (e) => {
-    e.stopPropagation(); // Prevent clicking the card
+    e.stopPropagation();
     
     const shareData = {
       title: 'CaptionVibes',
@@ -54,24 +55,17 @@ const CaptionCard = ({ data, onCopy, user, isFavorited: initialIsFavorited, onFa
       url: window.location.href
     };
 
-    // Try Web Share API first (works on mobile and some desktop browsers)
     if (navigator.share) {
       try {
         await navigator.share(shareData);
       } catch (err) {
-        // User cancelled or error occurred
-        if (err.name !== 'AbortError') {
-          console.error('Share error:', err);
-        }
+        if (err.name !== 'AbortError') console.error('Share error:', err);
       }
     } else {
-      // Fallback: Copy text to clipboard
       try {
         await navigator.clipboard.writeText(data.text);
         alert('Caption copied to clipboard!');
       } catch (err) {
-        console.error('Copy error:', err);
-        // Final fallback: show text in prompt
         prompt('Copy this caption:', data.text);
       }
     }
@@ -80,77 +74,83 @@ const CaptionCard = ({ data, onCopy, user, isFavorited: initialIsFavorited, onFa
   return (
     <div 
       onClick={() => onCopy(data.text)}
-      className="break-inside-avoid mb-6 group relative overflow-hidden rounded-2xl bg-[#1A1D23] shadow-lg transition-all hover:scale-[1.02] cursor-pointer border border-gray-800"
+      className="break-inside-avoid mb-6 group relative overflow-hidden rounded-2xl bg-white dark:bg-[#1A1625] shadow-sm hover:shadow-md dark:shadow-none transition-all hover:scale-[1.02] cursor-pointer border border-purple-100 dark:border-[#2F2645]"
     >
       {/* 1. CONTENT AREA */}
       {data.image ? (
         // --- IMAGE MODE CARD ---
-        <div className="relative overflow-hidden bg-[#0d0f12] flex items-center justify-center min-h-[300px]">
+        <div className="relative overflow-hidden bg-gray-50 dark:bg-[#110E1B] flex items-center justify-center min-h-[300px] transition-colors">
              <img 
                src={data.image} 
                alt={data.text || "Caption"} 
                className="w-full h-auto object-contain max-h-[600px] mx-auto block"
                onError={(e) => {
-                 console.error('Image failed to load:', data.image?.substring(0, 50));
                  e.target.style.display = 'none';
                }}
              />
-             {/* Gradient overlay at bottom for text readability if needed, though we burnt text in */}
              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors pointer-events-none"></div>
         </div>
       ) : (
-        // --- TEXT ONLY MODE CARD (Gradient) ---
+        // --- TEXT ONLY MODE CARD ---
         <div className={`p-8 bg-gradient-to-br ${data.gradient || 'from-gray-700 to-gray-900'}`}>
-             <p className={`text-xl md:text-2xl font-bold text-white text-center leading-tight py-4 drop-shadow-md break-words overflow-wrap-anywhere
-                ${data.language === 'urdu' ? 'font-urdu' : 'font-sans'}`}>
+             
+             {/* Text remains white because it is on a colored gradient background */}
+             <p 
+                dir={data.language === 'urdu' ? 'rtl' : 'ltr'} 
+                className={`font-bold text-slate-900 dark:text-white text-center leading-tight py-4 drop-shadow-md break-words overflow-wrap-anywhere
+                ${data.language === 'urdu' 
+                    ? 'font-urdu text-2xl md:text-3xl leading-loose' 
+                    : 'font-sans text-xl md:text-2xl'
+                }`}
+             >
                 "{data.text}"
             </p>
+
         </div>
       )}
 
-      {/* 2. OVERLAY ACTIONS (Top Right) */}
+      {/* 2. OVERLAY ACTIONS */}
       <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
-        {/* Download Button (Only for images) */}
         {data.image && (
-            <button onClick={handleDownload} className="w-8 h-8 bg-black/30 backdrop-blur rounded-full flex items-center justify-center hover:bg-black/50 text-white">
+            <button onClick={handleDownload} className="w-8 h-8 bg-black/30 backdrop-blur rounded-full flex items-center justify-center hover:bg-black/50 text-white transition-colors">
                 <DownloadSimple size={16} />
             </button>
         )}
-        {/* Copy Button */}
-        <button className="w-8 h-8 bg-black/30 backdrop-blur rounded-full flex items-center justify-center hover:bg-black/50 text-white">
+        <button className="w-8 h-8 bg-black/30 backdrop-blur rounded-full flex items-center justify-center hover:bg-black/50 text-white transition-colors">
           <Copy size={16} />
         </button>
       </div>
 
       {/* 3. FOOTER INFO */}
-      <div className="flex items-center justify-between p-4 bg-[#1A1D23] border-t border-gray-800">
+      <div className="flex items-center justify-between p-4 bg-white dark:bg-[#1A1625] border-t border-purple-100 dark:border-[#2F2645] transition-colors">
         <div className="flex items-center gap-3">
           <button 
             onClick={handleFavorite}
             disabled={isToggling || !user}
-            className="text-gray-300 hover:text-red-500 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            className="text-slate-400 dark:text-gray-400 hover:text-purple-600 dark:hover:text-red-500 transition disabled:opacity-50 disabled:cursor-not-allowed"
             title={user ? (isFavorited ? 'Remove from favorites' : 'Add to favorites') : 'Login to favorite'}
           >
             <HeartStraight 
               size={20} 
               weight={isFavorited ? 'fill' : 'regular'}
-              className={isFavorited ? 'text-red-500' : ''}
+              className={isFavorited ? 'text-purple-600 dark:text-red-500' : ''}
             />
           </button>
           <button 
             onClick={handleShare}
-            className="text-gray-300 hover:text-blue-400 transition"
-            title="Share caption"
+            className="text-slate-400 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition"
           >
             <Share size={20} />
           </button>
         </div>
+        
+        {/* Tags */}
         <div className="flex gap-2">
-            <span className="text-[10px] text-gray-500 border border-gray-700 px-2 py-0.5 rounded capitalize">
-            {data.language}
+            <span className="text-[10px] text-slate-500 dark:text-gray-400 border border-purple-200 dark:border-gray-600 px-2 py-0.5 rounded capitalize transition-colors">
+              {data.language}
             </span>
-            <span className="text-[10px] text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded capitalize">
-            {data.category || 'Vibe'}
+            <span className="text-[10px] text-purple-600 dark:text-purple-300 bg-purple-100 dark:bg-purple-500/20 px-2 py-0.5 rounded capitalize transition-colors">
+              {data.category || 'Vibe'}
             </span>
         </div>
       </div>
