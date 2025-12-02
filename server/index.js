@@ -5,7 +5,7 @@ const cors = require('cors');
 
 // Models
 const Caption = require('./models/Caption');
-const User = require('./models/Users'); // Make sure your file is named Users.js or User.js
+const User = require('./models/Users'); 
 const Favorite = require('./models/Favorite');
 
 // Utils
@@ -15,7 +15,6 @@ const app = express();
 
 // --- Middleware ---
 app.use(cors());
-// Increase limit for Base64 images
 app.use(express.json({ limit: '50mb' })); 
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
@@ -29,32 +28,25 @@ mongoose.connect(process.env.MONGO_URI)
 // AUTHENTICATION ROUTES
 // ==========================================
 
-// 1. SIGN UP
 app.post('/api/auth/signup', async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
-    // A. Validate input
     if (!name || !email || !password) {
       return res.status(400).json({ error: "Name, email, and password are required" });
     }
 
-    // B. Check if user exists (Crucial Step)
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ error: "Email already exists" });
     }
 
-    // C. Generate Avatar & Create User
     const avatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`;
-    
-    // Note: In a production app, you should hash the password here (e.g., using bcrypt)
     const newUser = new User({ name, email, password, avatar });
     await newUser.save();
 
     console.log('✅ User created:', { name, email, id: newUser._id });
 
-    // D. Return User (Exclude password)
     const userResponse = { ...newUser.toObject() };
     delete userResponse.password;
     
@@ -66,7 +58,6 @@ app.post('/api/auth/signup', async (req, res) => {
   }
 });
 
-// 2. LOGIN
 app.post('/api/auth/login', async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -78,7 +69,6 @@ app.post('/api/auth/login', async (req, res) => {
     const user = await User.findOne({ email });
     if (!user) return res.status(404).json({ error: "User not found" });
 
-    // Simple password check (Prototype only)
     if (user.password !== password) {
       return res.status(400).json({ error: "Invalid credentials" });
     }
@@ -93,7 +83,6 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-// GET: List all users (For debugging only)
 app.get('/api/users', async (req, res) => {
   try {
     const users = await User.find({}).select('-password');
@@ -105,14 +94,31 @@ app.get('/api/users', async (req, res) => {
 
 
 // ==========================================
-// CAPTION ROUTES
+// CAPTION ROUTES (Consolidated)
 // ==========================================
 
-// GET: Fetch Captions (With Language Filter)
+// GET: Fetch Captions (With Language & Search Filter)
 app.get('/api/captions', async (req, res) => {
   try {
-    const { lang } = req.query; 
-    const filter = lang ? { language: lang } : { language: 'english' };
+    const { lang, search } = req.query; 
+    
+    // 1. Base Filter (Language)
+    let filter = lang ? { language: lang } : { language: 'english' };
+
+    // 2. Search Filter (If search query exists)
+    if (search) {
+      const searchRegex = new RegExp(search, 'i'); // 'i' = case insensitive
+      
+      // Combine language filter with search logic
+      // Search in 'text' OR 'category'
+      filter = {
+        ...filter,
+        $or: [
+          { text: { $regex: searchRegex } },
+          { category: { $regex: searchRegex } }
+        ]
+      };
+    }
     
     const captions = await Caption.find(filter).sort({ createdAt: -1 });
     res.json(captions);
@@ -121,7 +127,6 @@ app.get('/api/captions', async (req, res) => {
   }
 });
 
-// POST: Add New Caption
 app.post('/api/captions', async (req, res) => {
   try {
     const { text, language, category, image } = req.body;
@@ -147,7 +152,6 @@ app.post('/api/captions', async (req, res) => {
 // FAVORITE ROUTES
 // ==========================================
 
-// POST: Toggle Favorite
 app.post('/api/favorites', async (req, res) => {
   try {
     const { userId, captionId } = req.body;
@@ -169,19 +173,16 @@ app.post('/api/favorites', async (req, res) => {
   }
 });
 
-// GET: Get User's Favorites (Optimized)
 app.get('/api/favorites/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
     
-    // Populate the caption details directly
     const favorites = await Favorite.find({ userId })
       .populate({
         path: 'captionId',
-        options: { sort: { createdAt: -1 } } // Sort captions by newest
+        options: { sort: { createdAt: -1 } } 
       });
     
-    // Extract just the caption objects, removing any nulls (deleted captions)
     const captions = favorites
       .map(fav => fav.captionId)
       .filter(caption => caption !== null);
@@ -193,7 +194,6 @@ app.get('/api/favorites/:userId', async (req, res) => {
   }
 });
 
-// GET: Check specific favorites status
 app.get('/api/favorites/check/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
@@ -215,6 +215,5 @@ app.get('/api/favorites/check/:userId', async (req, res) => {
   }
 });
 
-// --- Start Server ---
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

@@ -11,8 +11,22 @@ const Header = () => (
   <div className="h-20 flex-shrink-0 flex items-center justify-end px-8 sticky top-0 z-20 pointer-events-none"></div>
 );
 
-// Internal Layout Component to use `useLocation`
-const Layout = ({ children, user, selectedLang, setSelectedLang, handleLogout, theme, toggleTheme, handleCopy, toastVisible, isLoading }) => {
+// Internal Layout Component
+// Now accepts searchQuery and setSearchQuery to pass to Sidebar
+const Layout = ({ 
+  children, 
+  user, 
+  selectedLang, 
+  setSelectedLang, 
+  handleLogout, 
+  theme, 
+  toggleTheme, 
+  handleCopy, 
+  toastVisible, 
+  isLoading,
+  searchQuery,      // <--- NEW PROP
+  setSearchQuery    // <--- NEW PROP
+}) => {
   const location = useLocation();
   const showUploadButton = ['/', '/favorites'].includes(location.pathname);
 
@@ -29,6 +43,8 @@ const Layout = ({ children, user, selectedLang, setSelectedLang, handleLogout, t
         onLogout={handleLogout}
         theme={theme}
         toggleTheme={toggleTheme}
+        searchQuery={searchQuery}       // <--- CONNECTED
+        setSearchQuery={setSearchQuery} // <--- CONNECTED
       />
 
       <main className="flex-1 flex flex-col h-full relative z-10 overflow-hidden">
@@ -42,7 +58,7 @@ const Layout = ({ children, user, selectedLang, setSelectedLang, handleLogout, t
                 <Link 
                   to={user ? "/upload" : "/login"} 
                   state={{ from: '/upload' }}
-                  className="group flex items-center gap-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-purple-700 dark:text-white pl-4 pr-5 py-2.5 rounded-xl font-bold text-sm shadow-lg shadow-purple-600/30 hover:shadow-purple-600/50 hover:scale-[1.03] active:scale-[0.98] transition-all"
+                  className="group flex items-center gap-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text:slate-800 dark:text-white pl-4 pr-5 py-2.5 rounded-xl font-bold text-sm shadow-lg shadow-purple-600/30 hover:shadow-purple-600/50 hover:scale-[1.03] active:scale-[0.98] transition-all"
                 >
                   <div className="bg-white/20 p-1 rounded-lg group-hover:rotate-90 transition-transform duration-300">
                       <Plus size={16} weight="bold" />
@@ -62,17 +78,16 @@ const Layout = ({ children, user, selectedLang, setSelectedLang, handleLogout, t
 
 function App() {
   const [selectedLang, setSelectedLang] = useState('english');
+  const [searchQuery, setSearchQuery] = useState(''); // <--- NEW STATE FOR SEARCH
   const [toastVisible, setToastVisible] = useState(false);
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
   // Theme State
-  // const [theme, setTheme] = useState(() => {
-  //   if (typeof window !== 'undefined') return localStorage.getItem('theme') || 'dark';
-  //   return 'dark';
-  // });
-  const [theme, setTheme] = useState('dark');
-
+  const [theme, setTheme] = useState(() => {
+    if (typeof window !== 'undefined') return localStorage.getItem('theme') || 'dark';
+    return 'dark';
+  });
 
   useEffect(() => {
     const root = window.document.documentElement;
@@ -125,9 +140,22 @@ function App() {
             handleCopy={handleCopy}
             toastVisible={toastVisible}
             isLoading={isLoading}
+            searchQuery={searchQuery}       // <--- PASS DOWN
+            setSearchQuery={setSearchQuery} // <--- PASS DOWN
           >
             <Routes>
-              <Route path="/" element={<Feed selectedLang={selectedLang} onCopy={handleCopy} user={user} mode="feed" />} />
+              <Route 
+                path="/" 
+                element={
+                  <Feed 
+                    selectedLang={selectedLang} 
+                    searchQuery={searchQuery} // <--- PASS TO FEED
+                    onCopy={handleCopy} 
+                    user={user} 
+                    mode="feed" 
+                  />
+                } 
+              />
               
               <Route path="/upload" element={
                   isLoading ? <div className="p-10 text-center">Loading...</div> 
@@ -136,10 +164,19 @@ function App() {
                 } 
               />
               
-              <Route path="/favorites" element={
+              <Route 
+                path="/favorites" 
+                element={
                   isLoading ? <div className="p-10 text-center">Loading...</div>
-                  : user ? <Feed selectedLang={selectedLang} onCopy={handleCopy} user={user} mode="favorites" />
-                  : (
+                  : user ? (
+                    <Feed 
+                      selectedLang={selectedLang} 
+                      searchQuery={searchQuery} // <--- PASS TO FAVORITES FEED TOO
+                      onCopy={handleCopy} 
+                      user={user} 
+                      mode="favorites" 
+                    />
+                  ) : (
                     <div className="flex flex-col items-center justify-center h-full text-center p-10">
                       <div className="w-20 h-20 bg-purple-100 dark:bg-[#1A1625] rounded-full flex items-center justify-center mb-6 transition-colors shadow-inner">
                         <Heart size={40} className="text-purple-500 dark:text-red-400" weight="fill" />

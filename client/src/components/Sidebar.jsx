@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   House, 
@@ -8,12 +8,22 @@ import {
   SignIn,
   Sun,
   Moon,
-  ChatTeardropText // Imported Icon for Logo
+  ChatTeardropText
 } from '@phosphor-icons/react';
 
-const Sidebar = ({ selectedLang, setLang, user, onLogin, onLogout, theme, toggleTheme }) => {
+const Sidebar = ({ 
+  selectedLang, 
+  setLang, 
+  user, 
+  onLogin, 
+  onLogout, 
+  theme, 
+  toggleTheme,
+  searchQuery,      // <--- Receive from App
+  setSearchQuery    // <--- Receive from App
+}) => {
   const location = useLocation();
-  const [searchQuery, setSearchQuery] = useState('');
+  // Removed local state: const [searchQuery, setSearchQuery] = useState('');
 
   const isActive = (path) => location.pathname === path;
 
@@ -27,7 +37,7 @@ const Sidebar = ({ selectedLang, setLang, user, onLogin, onLogout, theme, toggle
     // SIDEBAR: Light Lavender vs Dark Deep Purple
     <aside className="w-72 bg-white dark:bg-[#1A1625] hidden md:flex flex-col border-r border-purple-100 dark:border-[#2F2645] h-screen sticky top-0 flex-shrink-0 z-30 transition-colors duration-300 shadow-sm dark:shadow-none">
       
-      {/* 1. Logo (UPDATED) */}
+      {/* 1. Logo */}
       <div className="p-6 pb-4">
         <Link to="/" className="flex items-center gap-2 group">
             {/* Logo Icon */}
@@ -37,21 +47,21 @@ const Sidebar = ({ selectedLang, setLang, user, onLogin, onLogout, theme, toggle
             </div>
             
             {/* Logo Text */}
-            <h1 className="text-2xl font-black tracking-tight text-slate-700 dark:text-white">
-              CAP<span className="text-slate-700 dark:text-white bg-clip-text bg-gradient-to-r from-purple-500 to-pink-500">SHALA</span>
+            <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+              CAP<span className="dark:text-white text-slate-900 bg-clip-text bg-gradient-to-r from-purple-500 to-pink-500">SHALA</span>
             </h1>
         </Link>
       </div>
 
-      {/* 2. Search Bar */}
+      {/* 2. Search Bar - CONNECTED TO APP STATE */}
       <div className="px-6 mb-6">
         <div className="flex items-center gap-2 bg-purple-50/50 dark:bg-[#231E31] border border-purple-100 dark:border-[#2F2645] rounded-xl px-3 py-2.5 focus-within:border-purple-400 dark:focus-within:border-purple-500 transition-colors">
           <MagnifyingGlass size={18} className="text-purple-400 dark:text-purple-300" />
           <input 
             type="text" 
             placeholder="Search vibes..." 
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            value={searchQuery} // Controlled Input
+            onChange={(e) => setSearchQuery(e.target.value)} // Update App State
             className="bg-transparent border-none outline-none text-slate-800 dark:text-purple-50 text-sm w-full placeholder-purple-300 dark:placeholder-gray-500"
           />
         </div>
@@ -143,7 +153,7 @@ const Sidebar = ({ selectedLang, setLang, user, onLogin, onLogout, theme, toggle
           ) : (
             <Link 
               to="/login"
-              className="w-full mt-3 flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 text-purple-600 dark:text-white font-bold text-sm shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 hover:scale-[1.02] transition-all"
+              className="w-full mt-3 flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 dark:text-white text-slate-800 font-bold text-sm shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 hover:scale-[1.02] transition-all"
             >
               <SignIn size={18} weight="bold" />
               Login / Sign Up
