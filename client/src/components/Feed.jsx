@@ -82,7 +82,7 @@ const Feed = ({ selectedLang, searchQuery, onCopy, user, mode = 'feed' }) => {
           ) : (
             <>
               <span className="capitalize text-purple-700 dark:text-white">{selectedLang} </span>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-pink-500">Feed</span>
+              <span className="text-purple-700 dark:text-white bg-clip-text bg-gradient-to-r from-purple-500 to-pink-500">Feed</span>
             </>
           )}
         </h2>

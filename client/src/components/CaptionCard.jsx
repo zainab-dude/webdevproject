@@ -1,9 +1,28 @@
 import React, { useState } from 'react';
-import { Copy, HeartStraight, DownloadSimple, Share } from '@phosphor-icons/react';
+import { Copy, HeartStraight, DownloadSimple, ShareNetwork } from '@phosphor-icons/react';
 
 const CaptionCard = ({ data, onCopy, user, isFavorited: initialIsFavorited, onFavoriteToggle }) => {
   const [isFavorited, setIsFavorited] = useState(initialIsFavorited || false);
   const [isToggling, setIsToggling] = useState(false);
+
+  // --- 1. HELPER: Convert Base64 String to a File Object ---
+  const dataURLtoFile = (dataurl, filename) => {
+    try {
+        const arr = dataurl.split(',');
+        const mime = arr[0].match(/:(.*?);/)[1];
+        const bstr = atob(arr[1]); 
+        let n = bstr.length; 
+        const u8arr = new Uint8Array(n);
+        
+        while(n--){
+            u8arr[n] = bstr.charCodeAt(n);
+        }
+        return new File([u8arr], filename, {type:mime});
+    } catch(e) {
+        console.error("Image conversion failed", e);
+        return null;
+    }
+  }
 
   const handleDownload = (e) => {
     e.stopPropagation();
@@ -46,27 +65,44 @@ const CaptionCard = ({ data, onCopy, user, isFavorited: initialIsFavorited, onFa
     }
   };
 
+  // --- 2. UPDATED SHARE LOGIC ---
   const handleShare = async (e) => {
     e.stopPropagation();
     
-    const shareData = {
-      title: 'CaptionVibes',
-      text: data.text,
-      url: window.location.href
+    // Base share data (Text Only initially)
+    // We REMOVED 'url: window.location.href' to stop it from sharing the link
+    let shareData = {
+      title: 'CaptionVibe',
+      text: data.text
     };
 
-    if (navigator.share) {
-      try {
-        await navigator.share(shareData);
-      } catch (err) {
-        if (err.name !== 'AbortError') console.error('Share error:', err);
+    try {
+      // If there is an image, convert and attach it
+      if (data.image) {
+        const file = dataURLtoFile(data.image, 'vibe.png');
+        
+        // Check if browser supports file sharing
+        if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
+          shareData.files = [file];
+        }
       }
-    } else {
-      try {
-        await navigator.clipboard.writeText(data.text);
-        alert('Caption copied to clipboard!');
-      } catch (err) {
-        prompt('Copy this caption:', data.text);
+
+      // Execute Share
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        throw new Error('Web Share API not supported');
+      }
+
+    } catch (err) {
+      // Fallback if user cancels or browser doesn't support sharing
+      if (err.name !== 'AbortError') {
+        try {
+          await navigator.clipboard.writeText(data.text);
+          alert('Caption copied to clipboard!');
+        } catch (clipboardErr) {
+          console.error('Clipboard failed', clipboardErr);
+        }
       }
     }
   };
@@ -94,7 +130,6 @@ const CaptionCard = ({ data, onCopy, user, isFavorited: initialIsFavorited, onFa
         // --- TEXT ONLY MODE CARD ---
         <div className={`p-8 bg-gradient-to-br ${data.gradient || 'from-gray-700 to-gray-900'}`}>
              
-             {/* Text remains white because it is on a colored gradient background */}
              <p 
                 dir={data.language === 'urdu' ? 'rtl' : 'ltr'} 
                 className={`font-bold text-slate-900 dark:text-white text-center leading-tight py-4 drop-shadow-md break-words overflow-wrap-anywhere
@@ -140,7 +175,7 @@ const CaptionCard = ({ data, onCopy, user, isFavorited: initialIsFavorited, onFa
             onClick={handleShare}
             className="text-slate-400 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition"
           >
-            <Share size={20} />
+            <ShareNetwork size={20} />
           </button>
         </div>
         
