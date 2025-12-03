@@ -8,7 +8,8 @@ import {
   SignIn,
   Sun,
   Moon,
-  ChatTeardropText
+  ChatTeardropText,
+  X // Added X icon for closing on mobile
 } from '@phosphor-icons/react';
 
 const Sidebar = ({ 
@@ -19,12 +20,12 @@ const Sidebar = ({
   onLogout, 
   theme, 
   toggleTheme,
-  searchQuery,      // <--- Receive from App
-  setSearchQuery    // <--- Receive from App
+  searchQuery,
+  setSearchQuery,
+  isOpen,       // New Prop
+  closeSidebar  // New Prop
 }) => {
   const location = useLocation();
-  // Removed local state: const [searchQuery, setSearchQuery] = useState('');
-
   const isActive = (path) => location.pathname === path;
 
   const languages = [
@@ -34,34 +35,51 @@ const Sidebar = ({
   ];
 
   return (
-    // SIDEBAR: Light Lavender vs Dark Deep Purple
-    <aside className="w-72 bg-white dark:bg-[#1A1625] hidden md:flex flex-col border-r border-purple-100 dark:border-[#2F2645] h-screen sticky top-0 flex-shrink-0 z-30 transition-colors duration-300 shadow-sm dark:shadow-none">
+    // RESPONSIVE SIDEBAR CONTAINER
+    <aside className={`
+      w-72 bg-white dark:bg-[#1A1625] 
+      flex flex-col border-r border-purple-100 dark:border-[#2F2645] 
+      h-screen 
+      transition-all duration-300 ease-in-out shadow-xl md:shadow-sm dark:shadow-none
       
-      {/* 1. Logo */}
-      <div className="p-6 pb-4">
+      /* Mobile Styles (Fixed & Hidden by default) */
+      fixed inset-y-0 left-0 z-40
+      ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+      
+      /* Desktop Styles (Static & Always Visible) */
+      md:relative md:translate-x-0 md:z-30
+    `}>
+      
+      {/* 1. Logo & Mobile Close */}
+      <div className="p-6 pb-4 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2 group">
-            {/* Logo Icon */}
             <div className="relative">
                 <div className="absolute inset-0 bg-purple-500 blur-sm opacity-30 rounded-full group-hover:opacity-50 transition-opacity"></div>
                 <ChatTeardropText size={32} weight="duotone" className="relative z-10 text-purple-600 dark:text-purple-400" />
             </div>
-            
-            {/* Logo Text */}
             <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
-              CAP<span className="dark:text-white text-slate-900 bg-clip-text bg-gradient-to-r from-purple-500 to-pink-500">SHALA</span>
+              CAP<span className="text-slate-900 dark:text-white bg-clip-text bg-gradient-to-r from-purple-500 to-pink-500">SHALA</span>
             </h1>
         </Link>
+
+        {/* Close Button (Mobile Only) */}
+        <button 
+          onClick={closeSidebar}
+          className="md:hidden p-1 text-slate-500 dark:text-gray-400 hover:text-red-500"
+        >
+          <X size={24} />
+        </button>
       </div>
 
-      {/* 2. Search Bar - CONNECTED TO APP STATE */}
+      {/* 2. Search Bar */}
       <div className="px-6 mb-6">
         <div className="flex items-center gap-2 bg-purple-50/50 dark:bg-[#231E31] border border-purple-100 dark:border-[#2F2645] rounded-xl px-3 py-2.5 focus-within:border-purple-400 dark:focus-within:border-purple-500 transition-colors">
           <MagnifyingGlass size={18} className="text-purple-400 dark:text-purple-300" />
           <input 
             type="text" 
             placeholder="Search vibes..." 
-            value={searchQuery} // Controlled Input
-            onChange={(e) => setSearchQuery(e.target.value)} // Update App State
+            value={searchQuery} 
+            onChange={(e) => setSearchQuery(e.target.value)} 
             className="bg-transparent border-none outline-none text-slate-800 dark:text-purple-50 text-sm w-full placeholder-purple-300 dark:placeholder-gray-500"
           />
         </div>
@@ -71,6 +89,7 @@ const Sidebar = ({
       <nav className="flex-1 px-4 space-y-2">
         <Link 
           to="/" 
+          onClick={closeSidebar} // Close on click (mobile UX)
           className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium
           ${isActive('/') 
             ? 'bg-purple-100 text-purple-700 dark:bg-[#2F2645] dark:text-white shadow-sm' 
@@ -82,6 +101,7 @@ const Sidebar = ({
 
         <Link 
           to="/favorites" 
+          onClick={closeSidebar} // Close on click (mobile UX)
           className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium
           ${isActive('/favorites') 
             ? 'bg-purple-100 text-purple-700 dark:bg-[#2F2645] dark:text-white shadow-sm' 
@@ -153,7 +173,8 @@ const Sidebar = ({
           ) : (
             <Link 
               to="/login"
-              className="w-full mt-3 flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 dark:text-white text-slate-800 font-bold text-sm shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 hover:scale-[1.02] transition-all"
+              onClick={closeSidebar}
+              className="w-full mt-3 flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 text-slate-900 dark:text-white font-bold text-sm shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 hover:scale-[1.02] transition-all"
             >
               <SignIn size={18} weight="bold" />
               Login / Sign Up
