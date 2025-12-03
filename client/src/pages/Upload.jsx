@@ -2,29 +2,33 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, PaperPlaneRight, Image as ImageIcon, TextT, UploadSimple, WarningCircle, Keyboard as KeyboardIcon, Backspace } from '@phosphor-icons/react';
 
-const Upload = () => {
-  const navigate = useNavigate();
-  const canvasRef = useRef(null);
-  const textareaRef = useRef(null); 
+
+// Added prop: initialLang
+const Upload = ({ initialLang = 'english' }) => {
+    const navigate = useNavigate();
+    const canvasRef = useRef(null);
+    const textareaRef = useRef(null); 
+    
+    const [mode, setMode] = useState('text'); 
+    const [error, setError] = useState('');
+    
+    // Auto-show keyboard if coming in with Urdu selected
+    const [showKeyboard, setShowKeyboard] = useState(initialLang === 'urdu');
   
-  const [mode, setMode] = useState('text'); 
-  const [error, setError] = useState('');
-  const [showKeyboard, setShowKeyboard] = useState(false);
-
-  const [formData, setFormData] = useState({
-    text: '',
-    language: 'english',
-    category: '',
-    imageResult: null 
-  });
-
-  const [uploadedImage, setUploadedImage] = useState(null);
-  const [style, setStyle] = useState({
-    fontSize: 40,
-    color: '#ffffff',
-    yPos: 50,
-    shadow: true
-  });
+    const [formData, setFormData] = useState({
+      text: '',
+      language: initialLang, // Initialize with the passed prop
+      category: '',
+      imageResult: null 
+    });
+  
+    const [uploadedImage, setUploadedImage] = useState(null);
+    const [style, setStyle] = useState({
+      fontSize: 40,
+      color: '#ffffff',
+      yPos: 50,
+      shadow: true
+    });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const urduKeys = [

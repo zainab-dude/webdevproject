@@ -153,7 +153,7 @@ function App() {
     setToastVisible(true);
     setTimeout(() => setToastVisible(false), 2000);
   };
-
+  
   return (
     <Router>
       <Routes>
@@ -175,7 +175,13 @@ function App() {
           >
             <Routes>
               <Route path="/" element={<Feed selectedLang={selectedLang} searchQuery={searchQuery} onCopy={handleCopy} user={user} mode="feed" />} />
-              <Route path="/upload" element={isLoading ? <div className="p-10 text-center">Loading...</div> : user ? <Upload /> : <Navigate to="/login" state={{ from: '/upload' }} replace />} />
+              <Route path="/upload" element={
+                  isLoading ? <div className="p-10 text-center">Loading...</div> 
+                  : user ? (
+                      <Upload initialLang={selectedLang} /> // <--- PASS IT HERE
+                  ) 
+                  : <Navigate to="/login" state={{ from: '/upload' }} replace />
+              } />
               <Route path="/favorites" element={isLoading ? <div className="p-10 text-center">Loading...</div> : user ? <Feed selectedLang={selectedLang} searchQuery={searchQuery} onCopy={handleCopy} user={user} mode="favorites" /> : (
                   <div className="flex flex-col items-center justify-center h-full text-center p-10">
                     <div className="w-20 h-20 bg-purple-100 dark:bg-[#1A1625] rounded-full flex items-center justify-center mb-6 transition-colors shadow-inner">

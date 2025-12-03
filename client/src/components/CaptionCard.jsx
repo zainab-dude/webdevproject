@@ -99,7 +99,7 @@ const CaptionCard = ({ data, onCopy, user, isFavorited: initialIsFavorited, onFa
                 dir={data.language === 'urdu' ? 'rtl' : 'ltr'} 
                 className={`font-bold text-slate-900 dark:text-white text-center leading-tight py-4 drop-shadow-md break-words overflow-wrap-anywhere
                 ${data.language === 'urdu' 
-                    ? 'font-urdu text-2xl md:text-3xl leading-loose' 
+                    ? 'font-urdu text-2xl md:text-2xl leading-loose' 
                     : 'font-sans text-xl md:text-2xl'
                 }`}
              >
